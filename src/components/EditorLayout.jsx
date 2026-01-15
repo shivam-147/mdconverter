@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, ArrowLeft, Eye, Edit2, Sun, Moon } from 'lucide-react';
+import { Download, Printer, ArrowLeft, Eye, Edit2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import 'github-markdown-css/github-markdown.css';
 import './EditorLayout.css';
@@ -14,25 +14,8 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
-    const [theme, setTheme] = useState('vs-dark'); // Monaco theme: 'vs-dark' | 'light'
 
     const containerRef = useRef(null);
-
-    // Initialize theme based on current session state
-    useEffect(() => {
-        const currentThemeAttr = document.documentElement.getAttribute('data-theme') || 'dark';
-        const monacoTheme = currentThemeAttr === 'light' ? 'light' : 'vs-dark';
-        setTheme(monacoTheme);
-        // Ensure consistency
-        document.documentElement.setAttribute('data-theme', currentThemeAttr);
-    }, []);
-
-    const toggleTheme = () => {
-        const newTheme = theme === 'vs-dark' ? 'light' : 'vs-dark';
-        setTheme(newTheme);
-        const cssTheme = newTheme === 'light' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', cssTheme);
-    };
 
     // Handle Resize
     const startResizing = React.useCallback(() => {
@@ -119,9 +102,6 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                 </div>
 
                 <div className="toolbar-actions">
-                    <button className="btn" onClick={toggleTheme} title="Toggle Theme">
-                        {theme === 'vs-dark' ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
                     <button className="btn" onClick={handleDownload}>
                         <Download size={20} />
                         <span>Download</span>
@@ -144,7 +124,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                         height="100%"
                         defaultLanguage="markdown"
                         value={markdown}
-                        theme={theme}
+                        theme="vs-dark"
                         onChange={(value) => setMarkdown(value || '')}
                         loading="Loading Editor..."
                         options={{

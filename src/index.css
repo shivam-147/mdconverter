@@ -122,7 +122,7 @@ button {
     visibility: visible;
   }
 
-  /* Hide all UI elements */
+  /* Hide UI components explicitly */
   .toolbar,
   .resizer,
   .mobile-nav,
@@ -133,7 +133,7 @@ button {
     display: none !important;
   }
 
-  /* Ensure containers allow printing */
+  /* Reset layout containers to allow content flow */
   #root,
   .app-root,
   .app-container,
@@ -144,42 +144,58 @@ button {
     overflow: visible !important;
     background: white !important;
     position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Show Preview specific logic */
+  /* Preview specifics */
   .preview-pane,
   .preview-pane-print {
     display: block !important;
     width: 100% !important;
     height: auto !important;
-    position: static !important;
     overflow: visible !important;
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
+    position: static !important;
   }
 
   .preview-content {
-    max-width: none !important;
+    max-width: 100% !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
+    color: black !important;
     box-shadow: none !important;
   }
 
-  /* Reset markdown text colors for print */
+  /* Markdown styling for print */
   .markdown-body {
     color: black !important;
     background-color: white !important;
     font-size: 12pt;
+    font-family: 'Inter', sans-serif !important;
   }
 
   .markdown-body pre {
     white-space: pre-wrap;
     word-break: break-all;
-    background: #f1f1f1 !important;
+    background: #f5f5f5 !important;
     border: 1px solid #ddd;
+    page-break-inside: avoid;
+  }
+
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3 {
+    page-break-after: avoid;
+  }
+
+  .markdown-body img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
   }
 }

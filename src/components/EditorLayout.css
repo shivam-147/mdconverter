@@ -100,8 +100,8 @@
 }
 
 .preview-pane {
-    background-color: var(--bg-secondary);
-    /* Preview area background */
+    background-color: #f4f4f5;
+    /* Preview area background - Light Theme forced */
     height: 100%;
     overflow-y: auto;
     position: relative;
@@ -113,8 +113,8 @@
     margin: 0 auto;
     padding: 40px;
     min-height: 100%;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: #ffffff;
+    color: #18181b;
     transition: background-color 0.3s, color 0.3s;
 }
 
