@@ -1,0 +1,114 @@
+:root {
+  --bg-primary: #09090b;
+  --bg-secondary: #18181b;
+  --bg-tertiary: #27272a;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --accent-primary: #6366f1; /* Indigo 500 */
+  --accent-hover: #4f46e5;
+  --border-color: #3f3f46;
+  --danger: #ef4444;
+  --success: #22c55e;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+  
+  --glass-bg: rgba(24, 24, 27, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color);
+}
+
+/* Utilities */
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.h-full { height: 100%; }
+.w-full { width: 100%; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.p-4 { padding: 1rem; }
+
+/* Print Styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+  
+  #app-root, .editor-pane, .toolbar, .landing-page {
+    display: none !important;
+  }
+  
+  .preview-pane-print {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  
+  /* Reset markdown styles for print */
+  .markdown-body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: black !important;
+  }
+  
+  .markdown-body pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: #f1f1f1 !important;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .markdown-body code {
+    color: #d63384; /* Standard red/pink for inline code */
+  }
+}
