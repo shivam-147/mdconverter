@@ -100,8 +100,8 @@
 }
 
 .preview-pane {
-    background-color: #ffffff;
-    /* Preview is usually white like paper */
+    background-color: var(--bg-secondary);
+    /* Preview area background */
     height: 100%;
     overflow-y: auto;
     position: relative;
@@ -113,8 +113,9 @@
     margin: 0 auto;
     padding: 40px;
     min-height: 100%;
-    background: white;
-    color: #24292f;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 /* Resizer */

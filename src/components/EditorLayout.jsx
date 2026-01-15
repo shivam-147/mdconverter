@@ -3,7 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, ArrowLeft, Eye, Edit2, FileText } from 'lucide-react';
+import { Download, Printer, ArrowLeft, Eye, Edit2, Sun, Moon } from 'lucide-react';
+import Editor from '@monaco-editor/react';
 import 'github-markdown-css/github-markdown.css';
 import './EditorLayout.css';
 
@@ -13,8 +14,25 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
+    const [theme, setTheme] = useState('vs-dark'); // Monaco theme: 'vs-dark' | 'light'
 
     const containerRef = useRef(null);
+
+    // Initialize theme based on current session state
+    useEffect(() => {
+        const currentThemeAttr = document.documentElement.getAttribute('data-theme') || 'dark';
+        const monacoTheme = currentThemeAttr === 'light' ? 'light' : 'vs-dark';
+        setTheme(monacoTheme);
+        // Ensure consistency
+        document.documentElement.setAttribute('data-theme', currentThemeAttr);
+    }, []);
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'vs-dark' ? 'light' : 'vs-dark';
+        setTheme(newTheme);
+        const cssTheme = newTheme === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', cssTheme);
+    };
 
     // Handle Resize
     const startResizing = React.useCallback(() => {
@@ -64,7 +82,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     };
 
     const CodeBlock = {
-        code({ node, inline, className, children, ...props }) {
+        code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
                 <SyntaxHighlighter
@@ -101,6 +119,9 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                 </div>
 
                 <div className="toolbar-actions">
+                    <button className="btn" onClick={toggleTheme} title="Toggle Theme">
+                        {theme === 'vs-dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
                     <button className="btn" onClick={handleDownload}>
                         <Download size={20} />
                         <span>Download</span>
@@ -119,12 +140,23 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     className={`editor-pane ${mobileView === 'preview' ? 'hidden-on-mobile' : ''}`}
                     style={{ width: `${editorWidth}%` }}
                 >
-                    <textarea
-                        className="editor-textarea"
+                    <Editor
+                        height="100%"
+                        defaultLanguage="markdown"
                         value={markdown}
-                        onChange={(e) => setMarkdown(e.target.value)}
-                        placeholder="# Start writing..."
-                        spellCheck="false"
+                        theme={theme}
+                        onChange={(value) => setMarkdown(value || '')}
+                        loading="Loading Editor..."
+                        options={{
+                            minimap: { enabled: false },
+                            fontSize: 14,
+                            wordWrap: 'on',
+                            lineNumbers: 'on',
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            padding: { top: 16, bottom: 16 },
+                            fontFamily: 'Fira Code, monospace',
+                        }}
                     />
                 </div>
 

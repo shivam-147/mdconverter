@@ -1,20 +1,38 @@
 :root {
+  color-scheme: dark;
+  /* Default Dark Theme */
   --bg-primary: #09090b;
   --bg-secondary: #18181b;
   --bg-tertiary: #27272a;
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
-  --accent-primary: #6366f1; /* Indigo 500 */
+  --accent-primary: #6366f1;
+  /* Indigo 500 */
   --accent-hover: #4f46e5;
   --border-color: #3f3f46;
   --danger: #ef4444;
   --success: #22c55e;
-  
+
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
-  
+
   --glass-bg: rgba(24, 24, 27, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f4f4f5;
+  --bg-tertiary: #e4e4e7;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --border-color: #d4d4d8;
+  --accent-primary: #4f46e5;
+  /* Indigo 600 */
+  --accent-hover: #4338ca;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -30,6 +48,7 @@ body {
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 button {
@@ -58,14 +77,37 @@ button {
 }
 
 /* Utilities */
-.flex { display: flex; }
-.justify-between { justify-content: space-between; }
-.items-center { align-items: center; }
-.h-full { height: 100%; }
-.w-full { width: 100%; }
-.gap-2 { gap: 0.5rem; }
-.gap-4 { gap: 1rem; }
-.p-4 { padding: 1rem; }
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
 
 /* Print Styles */
 @media print {
@@ -73,42 +115,71 @@ button {
     size: A4;
     margin: 20mm;
   }
-  
+
   body {
-    background: white;
-    color: black;
+    background: white !important;
+    color: black !important;
+    visibility: visible;
   }
-  
-  #app-root, .editor-pane, .toolbar, .landing-page {
+
+  /* Hide all UI elements */
+  .toolbar,
+  .resizer,
+  .mobile-nav,
+  .editor-pane,
+  .landing-page,
+  .btn,
+  .file-info {
     display: none !important;
   }
-  
+
+  /* Ensure containers allow printing */
+  #root,
+  .app-root,
+  .app-container,
+  .editor-body {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    background: white !important;
+    position: static !important;
+  }
+
+  /* Show Preview specific logic */
+  .preview-pane,
   .preview-pane-print {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    overflow: visible;
+    width: 100% !important;
+    height: auto !important;
+    position: static !important;
+    overflow: visible !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
-  
-  /* Reset markdown styles for print */
+
+  .preview-content {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Reset markdown text colors for print */
   .markdown-body {
-    font-size: 12pt;
-    line-height: 1.5;
     color: black !important;
+    background-color: white !important;
+    font-size: 12pt;
   }
-  
+
   .markdown-body pre {
     white-space: pre-wrap;
     word-break: break-all;
     background: #f1f1f1 !important;
     border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .markdown-body code {
-    color: #d63384; /* Standard red/pink for inline code */
   }
 }
