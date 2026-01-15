@@ -61,7 +61,69 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
 
     // Handle Print
     const handlePrint = () => {
-        window.print();
+        const printContent = document.querySelector('.preview-content');
+        if (!printContent) return;
+
+        // Create a hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+
+        // Copy all stylesheets from the main document to preserve formatting
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map((style) => style.outerHTML)
+            .join('');
+
+        iframeDoc.open();
+        iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>${fileName.replace(/\.md$/, '')}</title>
+                    ${styles}
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 20mm 15mm;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: white;
+                        }
+                        .markdown-body {
+                            background-color: white !important;
+                            color: black !important;
+                            width: 100%;
+                            padding: 0 10px; /* Slight padding to prevent edge glue */
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="markdown-body">
+                        ${printContent.innerHTML}
+                    </div>
+                </body>
+            </html>
+        `);
+        iframeDoc.close();
+
+        // Allow styles to load before printing
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            // Clean up the iframe after printing is initiated
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 500);
     };
 
     const CodeBlock = {

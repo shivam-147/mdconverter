@@ -116,7 +116,12 @@ button {
     margin: 20mm;
   }
 
+  /* FORCE explicit resets on root elements */
+  html,
   body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     background: white !important;
     color: black !important;
     visibility: visible;
