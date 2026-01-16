@@ -5,6 +5,8 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Download, Printer, ArrowLeft, Eye, Edit2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import Select from 'react-select';
+import logo from '../assets/logo.png';
 import 'github-markdown-css/github-markdown.css';
 import './EditorLayout.css';
 
@@ -14,6 +16,50 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
+    const [editorFontSize, setEditorFontSize] = useState(14);
+    const [selectedFont, setSelectedFont] = useState({ label: 'Inter', value: 'Inter, sans-serif' });
+    const [fontOptions, setFontOptions] = useState([]);
+
+    // Fetch Google Fonts
+    useEffect(() => {
+        const fetchFonts = async () => {
+            try {
+                // Using a public list of fonts to avoid API key requirement
+                const response = await fetch('https://raw.githubusercontent.com/jonathantneal/google-fonts-complete/master/google-fonts.json');
+                const data = await response.json();
+
+                const googleFonts = Object.keys(data).map(fontName => ({
+                    label: fontName,
+                    value: `"${fontName}", sans-serif`
+                }));
+
+                const combined = [...fontOptions];
+                googleFonts.forEach(gf => {
+                    if (!combined.find(f => f.label === gf.label)) {
+                        combined.push(gf);
+                    }
+                });
+                setFontOptions(combined);
+            } catch (error) {
+                console.error('Failed to fetch Google Fonts:', error);
+            }
+        };
+        fetchFonts();
+    }, []);
+
+    // Load Font Dynamically
+    useEffect(() => {
+        if (selectedFont.label && !['Inter', 'Roboto', 'Open Sans', 'Georgia', 'Fira Code', 'System Mono'].includes(selectedFont.label)) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = `https://fonts.googleapis.com/css2?family=${selectedFont.label.replace(/\s+/g, '+')}&display=swap`;
+            document.head.appendChild(link);
+            return () => {
+                // We keep it loaded for simplicity and to avoid flickering if reselected
+            };
+        }
+    }, [selectedFont]);
+
 
     const containerRef = useRef(null);
 
@@ -58,6 +104,14 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         element.click();
         document.body.removeChild(element);
     };
+    const increaseFontSize = () => {
+        setEditorFontSize((size) => Math.min(size + 1, 48));
+    };
+
+    const decreaseFontSize = () => {
+        setEditorFontSize((size) => Math.max(size - 1, 8));
+    };
+
 
     // Handle Print
     const handlePrint = () => {
@@ -103,6 +157,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                             color: black !important;
                             width: 100%;
                             padding: 0 10px; /* Slight padding to prevent edge glue */
+                            font-family: ${selectedFont.value} !important;
                         }
                     </style>
                 </head>
@@ -154,6 +209,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     <button className="btn" onClick={onBack} title="Back to Home">
                         <ArrowLeft size={20} />
                     </button>
+                    <img src={logo} alt="Logo" className="toolbar-logo" />
                     <input
                         type="text"
                         className="file-name-input"
@@ -164,6 +220,17 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                 </div>
 
                 <div className="toolbar-actions">
+                    <div className="font-selector">
+                        <Select
+                            className="font-select-container"
+                            classNamePrefix="font-select"
+                            value={selectedFont}
+                            onChange={setSelectedFont}
+                            options={fontOptions}
+                            isSearchable={true}
+                            placeholder="Search fonts..."
+                        />
+                    </div>
                     <button className="btn" onClick={handleDownload}>
                         <Download size={20} />
                         <span>Download</span>
@@ -182,6 +249,16 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     className={`editor-pane ${mobileView === 'preview' ? 'hidden-on-mobile' : ''}`}
                     style={{ width: `${editorWidth}%` }}
                 >
+                    <div className="flex items-center gap-4 ">
+
+                        <button className="btn" onClick={decreaseFontSize} title="Decrease editor text size">
+                            A-
+                        </button>
+                        <div className="text-white">{editorFontSize}px</div>
+                        <button className="btn" onClick={increaseFontSize} title="Increase editor text size">
+                            A+
+                        </button>
+                    </div>
                     <Editor
                         height="100%"
                         defaultLanguage="markdown"
@@ -191,7 +268,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                         loading="Loading Editor..."
                         options={{
                             minimap: { enabled: false },
-                            fontSize: 14,
+                            fontSize: editorFontSize,
                             wordWrap: 'on',
                             lineNumbers: 'on',
                             scrollBeyondLastLine: false,
@@ -215,7 +292,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     className={`preview-pane preview-pane-print ${mobileView === 'editor' ? 'hidden-on-mobile' : ''}`}
                     style={{ width: `${100 - editorWidth}%` }}
                 >
-                    <div className="preview-content markdown-body">
+                    <div className="preview-content markdown-body" style={{ fontFamily: selectedFont.value }}>
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={CodeBlock}

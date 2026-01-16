@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import LandingPage from './components/LandingPage';
 import EditorLayout from './components/EditorLayout';
+import './index.css';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('landing');

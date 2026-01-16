@@ -9,6 +9,13 @@
     padding: 2rem;
 }
 
+.landing-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 2rem;
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+}
+
 .landing-title {
     font-size: 3rem;
     font-weight: 800;
@@ -48,10 +55,16 @@
     backdrop-filter: blur(10px);
 }
 
-.action-card:hover {
+.action-card:hover,
+.action-card.dragging {
     transform: translateY(-5px);
     border-color: var(--accent-primary);
     box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3);
+}
+
+.action-card.dragging {
+    background: rgba(99, 102, 241, 0.1);
+    border-style: dashed;
 }
 
 .action-icon {

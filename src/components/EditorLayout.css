@@ -23,6 +23,12 @@
     gap: 1rem;
 }
 
+.toolbar-logo {
+    width: 32px;
+    height: 32px;
+    margin-right: 0.5rem;
+}
+
 .file-name-input {
     background: transparent;
     border: 1px solid transparent;
@@ -42,6 +48,48 @@
 .toolbar-actions {
     display: flex;
     gap: 1rem;
+}
+
+.font-selector {
+    min-width: 200px;
+}
+
+.font-select-container {
+    width: 100%;
+}
+
+.font-select__control {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.font-select__single-value {
+    color: var(--text-primary) !important;
+}
+
+.font-select__menu {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    z-index: 100 !important;
+}
+
+.font-select__option {
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+    cursor: pointer !important;
+}
+
+.font-select__option--is-focused {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.font-select__option--is-selected {
+    background-color: var(--accent-primary) !important;
+    color: white !important;
+}
+
+.font-select__input-container {
+    color: var(--text-primary) !important;
 }
 
 .btn {
