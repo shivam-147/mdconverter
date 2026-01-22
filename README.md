@@ -12,6 +12,7 @@ A free, modern, and privacy-focused Markdown editor with professional PDF export
 - **PDF Export**: One-click professional A4 PDF export with clean margins and no watermarks.
 - **File Management**: `Upload` existing .md files and `Download` your work locally.
 - **Privacy First**: All processing happens 100% in your browser. No data is sent to any server.
+- **Mermaid Diagrams**: Create flowcharts, sequence diagrams, and more using `mermaid` code blocks.
 - **Mobile Friendly**: Responsive design with toggleable editor/preview modes.
 
 ## Tech Stack
@@ -20,6 +21,7 @@ A free, modern, and privacy-focused Markdown editor with professional PDF export
 - **Styling**: Vanilla CSS (CSS Modules approach) + Glassmorphism
 - **Icons**: Lucide React
 - **Markdown Engine**: React Markdown + Remark GFM
+- **Diagrams**: Mermaid.js
 - **Syntax Highlighting**: React Syntax Highlighter (Prism)
 
 ## Getting Started

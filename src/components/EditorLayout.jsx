@@ -7,8 +7,9 @@ import { Download, Printer, ArrowLeft, Eye, Edit2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import Select from 'react-select';
 import logo from '../assets/logo.png';
-import 'github-markdown-css/github-markdown.css';
+import 'github-markdown-css/github-markdown-light.css';
 import './EditorLayout.css';
+import MermaidDiagram from './MermaidDiagram';
 
 const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [markdown, setMarkdown] = useState(initialContent || '');
@@ -184,6 +185,14 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const CodeBlock = {
         code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
+            const isMermaid = match && match[1] === 'mermaid';
+
+            if (!inline && isMermaid) {
+                return (
+                    <MermaidDiagram data={String(children).replace(/\n$/, '')} />
+                );
+            }
+
             return !inline && match ? (
                 <SyntaxHighlighter
                     style={tomorrow}
