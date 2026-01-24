@@ -188,9 +188,8 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
             const isMermaid = match && match[1] === 'mermaid';
 
             if (!inline && isMermaid) {
-                return (
-                    <MermaidDiagram data={String(children).replace(/\n$/, '')} />
-                );
+                const content = String(children || '').replace(/\n$/, '');
+                return <MermaidDiagram data={content} />;
             }
 
             return !inline && match ? (

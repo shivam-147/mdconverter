@@ -18,7 +18,7 @@ const MermaidDiagram = ({ data }) => {
 
     useEffect(() => {
         const renderDiagram = async () => {
-            if (!data) return;
+            if (!data || data === 'undefined' || data === 'null') return;
 
             try {
                 // Generate a unique ID for each diagram to prevent DOM conflicts during rendering
