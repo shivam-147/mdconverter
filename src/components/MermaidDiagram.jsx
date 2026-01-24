@@ -5,6 +5,7 @@ mermaid.initialize({
     startOnLoad: false,
     theme: 'default',
     securityLevel: 'loose',
+    suppressErrorRendering: true,
     themeVariables: {
         darkMode: false,
         background: '#ffffff', // To match BC of pdf I put it white, will be change to dynamic in future
@@ -21,6 +22,9 @@ const MermaidDiagram = ({ data }) => {
             if (!data || data === 'undefined' || data === 'null') return;
 
             try {
+                // Try to parse first to catch syntax errors without rendering diagram
+                await mermaid.parse(data);
+
                 // Generate a unique ID for each diagram to prevent DOM conflicts during rendering
                 const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -43,8 +47,11 @@ const MermaidDiagram = ({ data }) => {
     return (
         <div className="mermaid-container my-4 overflow-x-auto text-center" ref={containerRef}>
             {error ? (
-                <div className="text-red-500 font-mono text-sm p-2 bg-red-50 rounded">
-                    {error}
+                <div className="text-left border border-red-200 rounded p-4 bg-red-50">
+                    <p className="text-red-600 font-semibold mb-2">{error}</p>
+                    <pre className="font-mono text-xs bg-white p-2 rounded border border-gray-200 overflow-x-auto text-gray-700">
+                        {data}
+                    </pre>
                 </div>
             ) : (
                 <div dangerouslySetInnerHTML={{ __html: svg }} />
