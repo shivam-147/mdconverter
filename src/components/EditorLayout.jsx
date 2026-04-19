@@ -13,7 +13,7 @@ import MermaidDiagram from './MermaidDiagram';
 
 const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [markdown, setMarkdown] = useState(initialContent || '');
-    const [fileName, setFileName] = useState(initialFileName || 'untitled.md');
+const [fileName, setFileName] = useState(initialFileName || 'download.md');
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
