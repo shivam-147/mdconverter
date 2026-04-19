@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, ArrowLeft, Eye, Edit2 } from 'lucide-react';
+import { Download, Printer, ArrowLeft, Eye, Edit2, Delete } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import Select from 'react-select';
 import logo from '../assets/logo.png';
@@ -275,15 +275,22 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     className={`editor-pane ${mobileView === 'preview' ? 'hidden-on-mobile' : ''}`}
                     style={{ width: `${editorWidth}%` }}
                 >
-                    <div className="flex items-center gap-4 ">
-
-                        <button className="btn" onClick={decreaseFontSize} title="Decrease editor text size">
-                            A-
-                        </button>
-                        <div className="text-white">{editorFontSize}px</div>
-                        <button className="btn" onClick={increaseFontSize} title="Increase editor text size">
-                            A+
-                        </button>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className='flex items-center gap-4'>
+                            <button className="btn" onClick={decreaseFontSize} title="Decrease editor text size">
+                                A-
+                            </button>
+                            <div className="text-white">{editorFontSize}px</div>
+                            <button className="btn" onClick={increaseFontSize} title="Increase editor text size">
+                                A+
+                            </button>
+                        </div>
+                        <div className='flex items-center gap-4'>
+                            <button className="btn" onClick={() => setMarkdown('')} title="Clear editor content">
+                                <span>Clear all</span>
+                                <Delete color="red" />
+                            </button>
+                        </div>
                     </div>
                     <Editor
                         height="100%"
