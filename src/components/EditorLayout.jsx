@@ -61,6 +61,24 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         }
     }, [selectedFont]);
 
+    // Load cached content if no initial content is provided
+    useEffect(() => {
+        if (!initialContent) {
+            const cached = localStorage.getItem(`editor-cache-content`);
+            if (cached) {
+                setMarkdown(cached);
+            }
+        }
+    }, [initialContent]);
+
+    // Cache content on change
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            localStorage.setItem('editor-cache-content', markdown);
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    }, [markdown]);
 
     const containerRef = useRef(null);
 
