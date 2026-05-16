@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -10,10 +10,56 @@ import logo from '../assets/logo.png';
 import 'github-markdown-css/github-markdown-light.css';
 import './EditorLayout.css';
 import MermaidDiagram from './MermaidDiagram';
+import { openDB } from 'idb';
+
+const IMAGE_DB_NAME = 'mdconverter-images';
+const IMAGE_STORE_NAME = 'images';
+const IMAGE_URL_PREFIX = 'idb-image://';
+
+const imageDbPromise = openDB(IMAGE_DB_NAME, 1, {
+    upgrade(db) {
+        if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+            db.createObjectStore(IMAGE_STORE_NAME, { keyPath: 'id' });
+        }
+    },
+});
+
+const MarkdownImage = ({ src, alt, ...props }) => {
+    const [imageSrc, setImageSrc] = useState(src);
+
+    useEffect(() => {
+        if (!src?.startsWith(IMAGE_URL_PREFIX)) {
+            setImageSrc(src);
+            return;
+        }
+
+        let objectUrl;
+        let cancelled = false;
+
+        const loadImage = async () => {
+            const db = await imageDbPromise;
+            const image = await db.get(IMAGE_STORE_NAME, src.slice(IMAGE_URL_PREFIX.length));
+            const file = image?.file || image?.blob;
+            if (!file || cancelled) return;
+
+            objectUrl = URL.createObjectURL(file);
+            setImageSrc(objectUrl);
+        };
+
+        loadImage();
+
+        return () => {
+            cancelled = true;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [src]);
+
+    return <img src={imageSrc || undefined} alt={alt} {...props} />;
+};
 
 const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     const [markdown, setMarkdown] = useState(initialContent || '');
-const [fileName, setFileName] = useState(initialFileName || 'download.md');
+    const [fileName, setFileName] = useState(initialFileName || 'download.md');
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
@@ -104,12 +150,50 @@ const [fileName, setFileName] = useState(initialFileName || 'download.md');
         [isResizing]
     );
 
+    // Creating editor reference and idb to handle paste events
+    const editorRef = useRef(null);
+
+    const handleImgPaste = async (event) => {
+        if (!editorRef.current || !editorRef.current.hasTextFocus()) return;
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((item) => item.type.startsWith('image/'));
+        if (!imageItem) return;
+        event.preventDefault();
+        const file = imageItem.getAsFile();
+        if (!file) return;
+        const id = `img-${Date.now()}`;
+        const url = `${IMAGE_URL_PREFIX}${id}`;
+
+        // Store image in IndexedDB
+        const db = await imageDbPromise;
+        await db.put(IMAGE_STORE_NAME, { id, file });
+
+        // Insert markdown image syntax at cursor position
+        const editor = editorRef.current;
+        const position = editor.getPosition();
+        const markdownImageSyntax = `![${file.name}](${url})`;
+        editor.executeEdits(null, [
+            {
+                range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: position.column,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column,
+                },
+                text: markdownImageSyntax,
+                forceMoveMarkers: true,
+            },
+        ]);
+    };
+
     useEffect(() => {
         window.addEventListener('mousemove', resize);
         window.addEventListener('mouseup', stopResizing);
+        window.addEventListener('paste', handleImgPaste, true);
         return () => {
             window.removeEventListener('mousemove', resize);
             window.removeEventListener('mouseup', stopResizing);
+            window.removeEventListener('paste', handleImgPaste, true);
         };
     }, [resize, stopResizing]);
 
@@ -201,6 +285,7 @@ const [fileName, setFileName] = useState(initialFileName || 'download.md');
     };
 
     const CodeBlock = {
+        img: MarkdownImage,
         code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const isMermaid = match && match[1] === 'mermaid';
@@ -297,6 +382,7 @@ const [fileName, setFileName] = useState(initialFileName || 'download.md');
                         defaultLanguage="markdown"
                         value={markdown}
                         theme="vs-dark"
+                        onMount={(editor) => { editorRef.current = editor; }}
                         onChange={(value) => setMarkdown(value || '')}
                         loading="Loading Editor..."
                         options={{
@@ -329,6 +415,9 @@ const [fileName, setFileName] = useState(initialFileName || 'download.md');
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={CodeBlock}
+                            urlTransform={(url) => (
+                                url.startsWith(IMAGE_URL_PREFIX) ? url : defaultUrlTransform(url)
+                            )}
                         >
                             {markdown}
                         </ReactMarkdown>
