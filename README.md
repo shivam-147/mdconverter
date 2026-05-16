@@ -11,6 +11,8 @@ A free, modern, and privacy-focused Markdown editor with professional PDF export
 - **Resizable Layout**: Drag to adjust the workspace to your preference.
 - **PDF Export**: One-click professional A4 PDF export with clean margins and no watermarks.
 - **File Management**: `Upload` existing .md files and `Download` your work locally.
+- **Image Paste Support**: Paste images directly into the editor and preview them immediately.
+- **Local Image Cache**: Pasted images are stored in your browser with IndexedDB, without uploading them to an external service.
 - **Privacy First**: All processing happens 100% in your browser. No data is sent to any server.
 - **Mermaid Diagrams**: Create flowcharts, sequence diagrams, and more using `mermaid` code blocks.
 - **Mobile Friendly**: Responsive design with toggleable editor/preview modes.
@@ -23,6 +25,7 @@ A free, modern, and privacy-focused Markdown editor with professional PDF export
 - **Markdown Engine**: React Markdown + Remark GFM
 - **Diagrams**: Mermaid.js
 - **Syntax Highlighting**: React Syntax Highlighter (Prism)
+- **Browser Storage**: IndexedDB via `idb`
 
 ## Getting Started
 
@@ -45,9 +48,11 @@ A free, modern, and privacy-focused Markdown editor with professional PDF export
 
 - **Upload**: Click "Upload .md File" to edit an existing document.
 - **New**: Click "Open Empty Editor" to start from scratch.
+- **Paste Images**: Copy an image, focus the editor, and paste. The app inserts Markdown image syntax automatically and stores the image locally in your browser.
 - **Print/PDF**: Click the "Print / PDF" button in the toolbar. This uses your browser's native print engine. Select "Save as PDF" in the print dialog.
   - *Note*: The print layout is optimized for A4 paper size.
 - **Download**: Save your work as a `.md` file.
+  - *Note*: Pasted images are referenced with local `idb-image://` URLs, so they can be previewed only in the same browser storage where they were pasted.
 
 ## License
 
