@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import EditorLayout from './components/EditorLayout';
 import './index.css';
@@ -7,6 +7,15 @@ function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [fileContent, setFileContent] = useState('');
   const [fileName, setFileName] = useState('');
+
+    useEffect(() => {
+            const cached = localStorage.getItem(`editor-cache-content`);
+            if (cached) {
+                setFileContent(cached);
+                setFileName("Download.md");
+                setCurrentPage('editor');
+            }
+    }, []);
 
   const handleUpload = (content, name) => {
     setFileContent(content);
