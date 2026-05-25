@@ -3,7 +3,6 @@ import LandingPage from './components/LandingPage';
 import EditorLayout from './components/EditorLayout';
 import './index.css';
 
-// Added landing page updrage
 
 function App() {
   const [currentPage, setCurrentPage] = useState('landing');
