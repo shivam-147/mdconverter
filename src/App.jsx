@@ -9,14 +9,15 @@ function App() {
   const [fileContent, setFileContent] = useState('');
   const [fileName, setFileName] = useState('');
 
-    useEffect(() => {
-            const cached = localStorage.getItem(`editor-cache-content`);
-            if (cached) {
-                setFileContent(cached);
-                setFileName("Download.md");
-                setCurrentPage('editor');
-            }
-    }, []);
+  // Load cached content if no initial content is provided
+  useEffect(() => {
+    const cached = localStorage.getItem(`editor-cache-content`);
+    if (cached) {
+      setFileContent(cached);
+      setFileName("Download.md");
+      setCurrentPage('editor');
+    }
+  }, []);
 
   const handleUpload = (content, name) => {
     setFileContent(content);
