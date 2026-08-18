@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -145,6 +145,24 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         }
     }, [selectedFont]);
 
+    // Load cached content if no initial content is provided
+    useEffect(() => {
+        if (!initialContent) {
+            const cached = localStorage.getItem(`editor-cache-content`);
+            if (cached) {
+                setMarkdown(cached);
+            }
+        }
+    }, [initialContent]);
+
+    // Cache content on change
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            localStorage.setItem('editor-cache-content', markdown);
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    }, [markdown]);
 
     const containerRef = useRef(null);
 
@@ -170,12 +188,50 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         [isResizing]
     );
 
+    // Creating editor reference and idb to handle paste events
+    const editorRef = useRef(null);
+
+    const handleImgPaste = async (event) => {
+        if (!editorRef.current || !editorRef.current.hasTextFocus()) return;
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((item) => item.type.startsWith('image/'));
+        if (!imageItem) return;
+        event.preventDefault();
+        const file = imageItem.getAsFile();
+        if (!file) return;
+        const id = `img-${Date.now()}`;
+        const url = `${IMAGE_URL_PREFIX}${id}`;
+
+        // Store image in IndexedDB
+        const db = await imageDbPromise;
+        await db.put(IMAGE_STORE_NAME, { id, file });
+
+        // Insert markdown image syntax at cursor position
+        const editor = editorRef.current;
+        const position = editor.getPosition();
+        const markdownImageSyntax = `![${file.name}](${url})`;
+        editor.executeEdits(null, [
+            {
+                range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: position.column,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column,
+                },
+                text: markdownImageSyntax,
+                forceMoveMarkers: true,
+            },
+        ]);
+    };
+
     useEffect(() => {
         window.addEventListener('mousemove', resize);
         window.addEventListener('mouseup', stopResizing);
+        window.addEventListener('paste', handleImgPaste, true);
         return () => {
             window.removeEventListener('mousemove', resize);
             window.removeEventListener('mouseup', stopResizing);
+            window.removeEventListener('paste', handleImgPaste, true);
         };
     }, [resize, stopResizing]);
 
@@ -268,6 +324,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     };
 
     const CodeBlock = {
+        img: MarkdownImage,
         code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const isMermaid = match && match[1] === 'mermaid';
@@ -469,15 +526,22 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     className={`editor-pane ${mobileView === 'preview' ? 'hidden-on-mobile' : ''}`}
                     style={{ width: `${editorWidth}%` }}
                 >
-                    <div className="flex items-center gap-4 ">
-
-                        <button className="btn" onClick={decreaseFontSize} title="Decrease editor text size">
-                            A-
-                        </button>
-                        <div className="text-white">{editorFontSize}px</div>
-                        <button className="btn" onClick={increaseFontSize} title="Increase editor text size">
-                            A+
-                        </button>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className='flex items-center gap-4'>
+                            <button className="btn" onClick={decreaseFontSize} title="Decrease editor text size">
+                                A-
+                            </button>
+                            <div className="text-white">{editorFontSize}px</div>
+                            <button className="btn" onClick={increaseFontSize} title="Increase editor text size">
+                                A+
+                            </button>
+                        </div>
+                        <div className='flex items-center gap-4'>
+                            <button className="btn" onClick={() => setMarkdown('')} title="Clear editor content">
+                                <span>Clear all</span>
+                                <Delete color="red" />
+                            </button>
+                        </div>
                     </div>
                     <Editor
                         height="100%"
@@ -516,6 +580,9 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={CodeBlock}
+                            urlTransform={(url) => (
+                                url.startsWith(IMAGE_URL_PREFIX) ? url : defaultUrlTransform(url)
+                            )}
                         >
                             {activeTab?.content || ''}
                         </ReactMarkdown>
