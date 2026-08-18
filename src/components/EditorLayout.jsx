@@ -3,13 +3,60 @@ import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, ArrowLeft, Eye, Edit2, Plus, X, Upload } from 'lucide-react';
+import { Download, Printer, ArrowLeft, Eye, Edit2, Plus, X, Upload, Trash2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import Select, { components } from 'react-select';
 import logo from '../assets/logo.png';
 import 'github-markdown-css/github-markdown-light.css';
 import './EditorLayout.css';
 import MermaidDiagram from './MermaidDiagram';
+import { openDB } from 'idb';
+
+const IMAGE_DB_NAME = 'mdconverter-images';
+const IMAGE_STORE_NAME = 'images';
+const IMAGE_URL_PREFIX = 'idb-image://';
+
+const imageDbPromise = openDB(IMAGE_DB_NAME, 1, {
+    upgrade(db) {
+        if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+            db.createObjectStore(IMAGE_STORE_NAME, { keyPath: 'id' });
+        }
+    },
+});
+
+const MarkdownImage = ({ src, alt, ...props }) => {
+    const [localImageSrc, setLocalImageSrc] = useState(null);
+
+    useEffect(() => {
+        if (!src?.startsWith(IMAGE_URL_PREFIX)) {
+            return;
+        }
+
+        let objectUrl;
+        let cancelled = false;
+
+        const loadImage = async () => {
+            const db = await imageDbPromise;
+            const image = await db.get(IMAGE_STORE_NAME, src.slice(IMAGE_URL_PREFIX.length));
+            const file = image?.file || image?.blob;
+            if (!file || cancelled) return;
+
+            objectUrl = URL.createObjectURL(file);
+            setLocalImageSrc(objectUrl);
+        };
+
+        loadImage();
+
+        return () => {
+            cancelled = true;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [src]);
+
+    const displaySrc = src?.startsWith(IMAGE_URL_PREFIX) ? localImageSrc : src;
+
+    return <img src={displaySrc || undefined} alt={alt} {...props} />;
+};
 
 const { Option } = components;
 
@@ -145,24 +192,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         }
     }, [selectedFont]);
 
-    // Load cached content if no initial content is provided
-    useEffect(() => {
-        if (!initialContent) {
-            const cached = localStorage.getItem(`editor-cache-content`);
-            if (cached) {
-                setMarkdown(cached);
-            }
-        }
-    }, [initialContent]);
 
-    // Cache content on change
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            localStorage.setItem('editor-cache-content', markdown);
-        }, 500);
-
-        return () => clearTimeout(timeout);
-    }, [markdown]);
 
     const containerRef = useRef(null);
 
@@ -537,9 +567,9 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                             </button>
                         </div>
                         <div className='flex items-center gap-4'>
-                            <button className="btn" onClick={() => setMarkdown('')} title="Clear editor content">
+                            <button className="btn" onClick={() => handleTabContentChange('')} title="Clear editor content">
                                 <span>Clear all</span>
-                                <Delete color="red" />
+                                <Trash2 color="red" size={16} />
                             </button>
                         </div>
                     </div>
@@ -548,6 +578,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                         defaultLanguage="markdown"
                         value={activeTab?.content || ''}
                         theme="vs-dark"
+                        onMount={(editor) => { editorRef.current = editor; }}
                         onChange={handleTabContentChange}
                         loading="Loading Editor..."
                         options={{
@@ -559,6 +590,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                             automaticLayout: true,
                             padding: { top: 16, bottom: 16 },
                             fontFamily: 'Fira Code, monospace',
+                            accessibilitySupport: 'off',
                         }}
                     />
                 </div>
