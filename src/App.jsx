@@ -5,7 +5,14 @@ import './index.css';
 
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedTabs = localStorage.getItem('md-studio-tabs');
+    try {
+      return (savedTabs && JSON.parse(savedTabs).length > 0) ? 'editor' : 'landing';
+    } catch {
+      return 'landing';
+    }
+  });
   const [fileContent, setFileContent] = useState('');
   const [fileName, setFileName] = useState('');
 
@@ -31,8 +38,9 @@ function App() {
   };
 
   const handleBack = () => {
-    // Ideally we should warn user about unsaved changes, but for this MVP we just go back
-    if (confirm('Are you sure you want to go back? Unsaved changes will be lost.')) {
+    if (confirm('Are you sure you want to go back? This will clear your current session.')) {
+      localStorage.removeItem('md-studio-tabs');
+      localStorage.removeItem('md-studio-active-tab');
       setCurrentPage('landing');
       setFileContent('');
       setFileName('');
