@@ -3,17 +3,88 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Download, Printer, ArrowLeft, Eye, Edit2 } from 'lucide-react';
+import { Download, Printer, ArrowLeft, Eye, Edit2, Plus, X, Upload } from 'lucide-react';
 import Editor from '@monaco-editor/react';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 import logo from '../assets/logo.png';
 import 'github-markdown-css/github-markdown-light.css';
 import './EditorLayout.css';
 import MermaidDiagram from './MermaidDiagram';
 
+const { Option } = components;
+
+const CustomOption = (props) => {
+    const { label, value } = props.data;
+    
+    useEffect(() => {
+        if (label && !['Inter', 'Roboto', 'Open Sans', 'Georgia', 'Fira Code', 'System Mono'].includes(label)) {
+            const fontId = `font-preview-${label.replace(/\s+/g, '-')}`;
+            if (!document.getElementById(fontId)) {
+                const link = document.createElement('link');
+                link.id = fontId;
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?family=${label.replace(/\s+/g, '+')}&text=${encodeURIComponent(label)}&display=swap`;
+                document.head.appendChild(link);
+            }
+        }
+    }, [label]);
+
+    return (
+        <Option {...props}>
+            <span style={{ fontFamily: value }}>{label}</span>
+        </Option>
+    );
+};
+
 const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
-    const [markdown, setMarkdown] = useState(initialContent || '');
-    const [fileName, setFileName] = useState(initialFileName || 'untitled.md');
+    const [tabs, setTabs] = useState(() => {
+        const saved = localStorage.getItem('md-studio-tabs');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed && parsed.length > 0) {
+                    // Strip .md from saved tab names if any exist
+                    return parsed.map(tab => ({
+                        ...tab,
+                        name: tab.name.replace(/\.md$/, '')
+                    }));
+                }
+            } catch (e) {
+                console.error("Failed to parse saved tabs", e);
+            }
+        }
+        return [
+            {
+                id: 'tab-1',
+                name: (initialFileName || 'untitled.md').replace(/\.md$/, ''),
+                content: initialContent || ''
+            }
+        ];
+    });
+
+    const [activeTabId, setActiveTabId] = useState(() => {
+        const savedActive = localStorage.getItem('md-studio-active-tab');
+        if (savedActive && tabs.some(tab => tab.id === savedActive)) {
+            return savedActive;
+        }
+        return tabs[0]?.id || 'tab-1';
+    });
+
+    const [editingTabId, setEditingTabId] = useState(null);
+
+    // Save tabs to localStorage on change
+    useEffect(() => {
+        localStorage.setItem('md-studio-tabs', JSON.stringify(tabs));
+    }, [tabs]);
+
+    // Save active tab ID to localStorage on change
+    useEffect(() => {
+        localStorage.setItem('md-studio-active-tab', activeTabId);
+    }, [activeTabId]);
+    
+    const activeTab = tabs.find(tab => tab.id === activeTabId) || tabs[0];
+
+    const fileInputRef = useRef(null);
     const [editorWidth, setEditorWidth] = useState(50); // percentage
     const [isResizing, setIsResizing] = useState(false);
     const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'preview'
@@ -25,14 +96,27 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
     useEffect(() => {
         const fetchFonts = async () => {
             try {
-                // Using a public list of fonts to avoid API key requirement
                 const response = await fetch('https://raw.githubusercontent.com/jonathantneal/google-fonts-complete/master/google-fonts.json');
                 const data = await response.json();
 
-                const googleFonts = Object.keys(data).map(fontName => ({
-                    label: fontName,
-                    value: `"${fontName}", sans-serif`
-                }));
+                // Curated list of popular, high-quality Google Fonts to avoid locking the UI thread
+                const popularFonts = [
+                    'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 
+                    'Source Sans Pro', 'Playfair Display', 'Merriweather', 'Noto Sans', 
+                    'Poppins', 'Lora', 'Quicksand', 'Nunito', 'Pacifico', 'Caveat', 
+                    'Abril Fatface', 'Crimson Text', 'Fira Sans', 'Work Sans', 'Ubuntu', 
+                    'PT Sans', 'PT Serif', 'Raleway', 'Dancing Script', 'Josefin Sans', 
+                    'Arvo', 'Bree Serif', 'Comfortaa', 'Questrial', 'Archivo', 'Asap', 
+                    'Exo 2', 'Inconsolata', 'Maven Pro', 'Cabin', 'Bitter', 'Dosis', 
+                    'Fjalla One', 'Libre Baskerville', 'Libre Franklin', 'Rubik', 'Teko'
+                ];
+
+                const googleFonts = Object.keys(data)
+                    .filter(fontName => popularFonts.includes(fontName))
+                    .map(fontName => ({
+                        label: fontName,
+                        value: `"${fontName}", sans-serif`
+                    }));
 
                 const combined = [...fontOptions];
                 googleFonts.forEach(gf => {
@@ -97,10 +181,11 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
 
     // Handle Download
     const handleDownload = () => {
+        if (!activeTab) return;
         const element = document.createElement('a');
-        const file = new Blob([markdown], { type: 'text/markdown' });
+        const file = new Blob([activeTab.content], { type: 'text/markdown' });
         element.href = URL.createObjectURL(file);
-        element.download = fileName.endsWith('.md') ? fileName : `${fileName}.md`;
+        element.download = activeTab.name.endsWith('.md') ? activeTab.name : `${activeTab.name}.md`;
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
@@ -141,7 +226,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
             <!DOCTYPE html>
             <html>
                 <head>
-                    <title>${fileName.replace(/\.md$/, '')}</title>
+                    <title>${activeTab.name.replace(/\.md$/, '')}</title>
                     ${styles}
                     <style>
                         @page {
@@ -209,6 +294,83 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
         },
     };
 
+    // Tab Management Functions
+    const handleTabContentChange = (value) => {
+        setTabs(tabs.map(tab => 
+            tab.id === activeTabId ? { ...tab, content: value || '' } : tab
+        ));
+    };
+
+    const handleTabNameChange = (id, newName) => {
+        setTabs(tabs.map(tab => 
+            tab.id === id ? { ...tab, name: newName } : tab
+        ));
+    };
+
+    const addNewTab = () => {
+        const newTab = {
+            id: Date.now().toString(),
+            name: 'untitled',
+            content: ''
+        };
+        setTabs([...tabs, newTab]);
+        setActiveTabId(newTab.id);
+    };
+
+    const closeTab = (idToClose, e) => {
+        if (e) e.stopPropagation(); // Prevent tab selection when clicking X
+        
+        if (tabs.length === 1) {
+            onBack();
+            return;
+        }
+
+        const newTabs = tabs.filter(tab => tab.id !== idToClose);
+        setTabs(newTabs);
+
+        // If active tab is closed, switch to the last remaining tab
+        if (activeTabId === idToClose) {
+            setActiveTabId(newTabs[newTabs.length - 1].id);
+        }
+    };
+
+    const handleCloseOrCancel = (tabId, e) => {
+        e.stopPropagation();
+        if (editingTabId === tabId) {
+            // If editing, close/cancel the edit mode instead of closing the tab
+            setEditingTabId(null);
+        } else {
+            closeTab(tabId, e);
+        }
+    };
+
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.name.endsWith('.md')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const newTab = {
+                    id: Date.now().toString(),
+                    name: file.name.replace(/\.md$/, ''),
+                    content: event.target.result
+                };
+                setTabs([...tabs, newTab]);
+                setActiveTabId(newTab.id);
+                // Reset input so the same file can be uploaded again if needed
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            };
+            reader.readAsText(file);
+        } else if (file) {
+            alert('Please upload a .md file');
+        }
+    };
+
     return (
         <div className="app-container">
             {/* Toolbar */}
@@ -221,8 +383,8 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     <input
                         type="text"
                         className="file-name-input"
-                        value={fileName}
-                        onChange={(e) => setFileName(e.target.value)}
+                        value={activeTab?.name || ''}
+                        onChange={(e) => handleTabNameChange(activeTabId, e.target.value)}
                         placeholder="Filename"
                     />
                 </div>
@@ -230,6 +392,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                 <div className="toolbar-actions">
                     <div className="font-selector">
                         <Select
+                            components={{ Option: CustomOption }}
                             className="font-select-container"
                             classNamePrefix="font-select"
                             value={selectedFont}
@@ -248,6 +411,55 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                         <span>Print / PDF</span>
                     </button>
                 </div>
+            </div>
+
+            {/* Tab Bar */}
+            <div className="tab-bar">
+                {tabs.map((tab) => (
+                    <div
+                        key={tab.id}
+                        className={`tab ${activeTabId === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTabId(tab.id)}
+                        onDoubleClick={() => setEditingTabId(tab.id)}
+                        title={tab.name}
+                    >
+                        {editingTabId === tab.id ? (
+                            <input
+                                autoFocus
+                                className="tab-name-input"
+                                value={tab.name}
+                                onChange={(e) => handleTabNameChange(tab.id, e.target.value)}
+                                onBlur={() => setEditingTabId(null)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') setEditingTabId(null);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <span className="tab-name">{tab.name}</span>
+                        )}
+                        <button 
+                            className="tab-close" 
+                            onClick={(e) => handleCloseOrCancel(tab.id, e)}
+                            title={editingTabId === tab.id ? "Cancel edit" : "Close tab"}
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                ))}
+                <button className="btn tab-add-btn" onClick={addNewTab} title="New File">
+                    <Plus size={18} />
+                </button>
+                <button className="btn tab-add-btn" onClick={handleUploadClick} title="Upload File">
+                    <Upload size={18} />
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".md"
+                    style={{ display: 'none' }}
+                />
             </div>
 
             {/* Editor & Preview Area */}
@@ -270,9 +482,9 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                     <Editor
                         height="100%"
                         defaultLanguage="markdown"
-                        value={markdown}
+                        value={activeTab?.content || ''}
                         theme="vs-dark"
-                        onChange={(value) => setMarkdown(value || '')}
+                        onChange={handleTabContentChange}
                         loading="Loading Editor..."
                         options={{
                             minimap: { enabled: false },
@@ -305,7 +517,7 @@ const EditorLayout = ({ initialContent, initialFileName, onBack }) => {
                             remarkPlugins={[remarkGfm]}
                             components={CodeBlock}
                         >
-                            {markdown}
+                            {activeTab?.content || ''}
                         </ReactMarkdown>
                     </div>
                 </div>
